@@ -1,4 +1,4 @@
-import { isScalarType, scalarTypeNames, isModuleType } from "../abi";
+import { isScalarType, isModuleType, scalarTypeNames } from "..";
 import { SchemaValidator } from "./";
 
 import {
@@ -133,18 +133,16 @@ export const getPropertyTypesValidator = (): SchemaValidator => {
           }
         },
         FieldDefinition: (node) => {
-          if (node.name.value === "sanitizeEnv") {
-            return;
-          }
-
           currentField = node.name.value;
         },
         NamedType: (node: NamedTypeNode) => {
           if (currentObject && currentField) {
+            const namedType = node.name.value;
+
             fieldTypes.push({
               object: currentObject,
               field: currentField,
-              type: node.name.value,
+              type: namedType,
             });
           }
         },
@@ -204,25 +202,24 @@ export const getPropertyTypesValidator = (): SchemaValidator => {
 };
 
 export function getCircularDefinitionsValidator(): SchemaValidator {
-  const operationTypes: string[] = [];
+  const ignoreTypeNames: string[] = [];
 
   return {
     visitor: {
       enter: {
         ObjectTypeDefinition: (node: ObjectTypeDefinitionNode) => {
-          const isOperationType = operationTypeNames.some(
-            (name) =>
-              node.name.value === name || node.name.value.endsWith(`_${name}`)
-          );
-          if (isOperationType) {
-            operationTypes.push(node.name.value);
+          if (
+            node.name.value === "Module" ||
+            node.name.value.endsWith("_Module")
+          ) {
+            ignoreTypeNames.push(node.name.value);
           }
         },
       },
     },
     cleanup: (documentNode: DocumentNode) => {
       const { cycleStrings, foundCycle } = getSchemaCycles(documentNode, {
-        ignoreTypeNames: operationTypes,
+        ignoreTypeNames,
         allowOnNullableFields: true,
       });
 

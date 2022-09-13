@@ -1,7 +1,8 @@
-import { ImportedDefinition } from "../abi";
 import { SchemaValidator } from ".";
+import { isImportedModuleType, isModuleType } from "..";
 
 import { DirectiveNode, ASTNode, ObjectTypeDefinitionNode } from "graphql";
+import { ImportedDefinition } from "@polywrap/wrap-manifest-types-js";
 
 export const getSupportedDirectivesValidator = (): SchemaValidator => {
   const supportedDirectives = [
@@ -10,6 +11,7 @@ export const getSupportedDirectivesValidator = (): SchemaValidator => {
     "capability",
     "enabled_interface",
     "annotate",
+    "env",
   ];
   const unsupportedUsages: string[] = [];
 
@@ -33,6 +35,41 @@ export const getSupportedDirectivesValidator = (): SchemaValidator => {
           )}`
         );
       }
+    },
+  };
+};
+
+export const getEnvDirectiveValidator = (): SchemaValidator => {
+  let currentType: string | undefined;
+
+  return {
+    visitor: {
+      enter: {
+        ObjectTypeDefinition: (node) => {
+          currentType = node.name.value;
+        },
+        FieldDefinition: (node) => {
+          const envDirective = node.directives?.find(
+            (d) => d.name.value === "env"
+          );
+
+          if (
+            envDirective &&
+            currentType &&
+            !isModuleType(currentType) &&
+            !isImportedModuleType(currentType)
+          ) {
+            throw new Error(
+              `@env directive should only be used on Module method definitions. Found on field '${node.name.value}' of type '${currentType}'`
+            );
+          }
+        },
+      },
+      leave: {
+        ObjectTypeDefinition: () => {
+          currentType = undefined;
+        },
+      },
     },
   };
 };

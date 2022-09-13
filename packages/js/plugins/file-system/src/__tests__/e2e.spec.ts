@@ -50,7 +50,7 @@ describe("FileSystem plugin", () => {
     );
 
     expect(result.error).toBeFalsy();
-    expect(result.data).toEqual(expectedContents);
+    expect(result.data).toEqual(new Uint8Array(expectedContents));
   });
 
   it("should fail reading a nonexistent file", async () => {
@@ -84,14 +84,14 @@ describe("FileSystem plugin", () => {
   it("should read a file using supported encodings as a string", async () => {
     let supportedEncodings = [
       FileSystem_EncodingEnum.ASCII,
+      FileSystem_EncodingEnum.UTF8,
+      FileSystem_EncodingEnum.UTF16LE,
+      FileSystem_EncodingEnum.UCS2,
       FileSystem_EncodingEnum.BASE64,
       FileSystem_EncodingEnum.BASE64URL,
+      FileSystem_EncodingEnum.LATIN1,
       FileSystem_EncodingEnum.BINARY,
       FileSystem_EncodingEnum.HEX,
-      FileSystem_EncodingEnum.LATIN1,
-      FileSystem_EncodingEnum.UCS2,
-      FileSystem_EncodingEnum.UTF16LE,
-      FileSystem_EncodingEnum.UTF8,
     ];
 
     for (const encoding of supportedEncodings) {

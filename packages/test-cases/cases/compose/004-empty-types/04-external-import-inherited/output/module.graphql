@@ -33,6 +33,8 @@ directive @enabled_interface on OBJECT
 
 directive @annotate(type: String!) on FIELD
 
+directive @env(required: Boolean!) on FIELD_DEFINITION
+
 ### Polywrap Header END ###
 
 type Module @imports(
@@ -47,7 +49,7 @@ type Module @imports(
   method2: CustomType
 }
 
-type CustomType implements Base_ImportedBaseType
+type CustomType implements Base_ImportedBaseType { }
 
 ### Imported Modules START ###
 
@@ -59,18 +61,22 @@ type Base_ImportedBaseType @imported(
   uri: "base.eth",
   namespace: "Base",
   nativeType: "ImportedBaseType"
-)
+) { }
 
 type Derived_ImportedDerivedType implements Derived_ImportedBaseType @imported(
   uri: "derived.eth",
   namespace: "Derived",
   nativeType: "ImportedDerivedType"
-)
+) { }
 
 type Derived_ImportedBaseType @imported(
   uri: "derived.eth",
   namespace: "Derived",
   nativeType: "ImportedBaseType"
-)
+) { }
 
 ### Imported Objects END ###
+
+### Imported Envs START ###
+
+### Imported Envs END ###

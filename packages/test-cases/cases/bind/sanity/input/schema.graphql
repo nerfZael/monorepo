@@ -55,6 +55,10 @@ type Module @imports(
     enumArray: [CustomEnum!]!
     optEnumArray: [CustomEnum]
     map: Map! @annotate(type: "Map<String!, Int!>!")
+    mapOfArr: Map! @annotate(type: "Map<String!, [Int!]!>!")
+    mapOfMap: Map! @annotate(type: "Map<String!, Map<String!, Int!>!>!")
+    mapOfObj: Map! @annotate(type: "Map<String!, AnotherType!>!")
+    mapOfArrOfObj: Map! @annotate(type: "Map<String!, [AnotherType!]!>!")
   ): Int!
 
   objectMethod(
@@ -62,7 +66,18 @@ type Module @imports(
     optObject: AnotherType
     objectArray: [AnotherType!]!
     optObjectArray: [AnotherType]
-  ): AnotherType
+  ): AnotherType @env(required: true)
+
+  optionalEnvMethod(
+    object: AnotherType!
+    optObject: AnotherType
+    objectArray: [AnotherType!]!
+    optObjectArray: [AnotherType]
+  ): AnotherType @env(required: false)
+
+  if(
+    if: else!
+  ): else!
 }
 
 type Env {
@@ -109,6 +124,11 @@ type CustomType {
   optEnum: CustomEnum
   enumArray: [CustomEnum!]!
   optEnumArray: [CustomEnum]
+  map: Map! @annotate(type: "Map<String!, Int!>!")
+  mapOfArr: Map! @annotate(type: "Map<String!, [Int!]!>!")
+  mapOfObj: Map! @annotate(type: "Map<String!, AnotherType!>!")
+  mapOfArrOfObj: Map! @annotate(type: "Map<String!, [AnotherType!]!>!")
+  mapCustomValue: Map! @annotate(type: "Map<String!, CustomMapValue>!")
 }
 
 type AnotherType {
@@ -120,6 +140,19 @@ type AnotherType {
 enum CustomEnum {
   STRING
   BYTES
+}
+
+type CustomMapValue {
+  foo: String!
+}
+
+type else {
+  else: String!
+}
+
+enum while {
+  for,
+  in,
 }
 
 ### Imported Modules START ###
@@ -143,7 +176,7 @@ type TestImport_Module @imported(
     optEnum: TestImport_Enum
     enumArray: [TestImport_Enum!]!
     optEnumArray: [TestImport_Enum]
-  ): TestImport_Object
+  ): TestImport_Object @env(required: true)
 
   anotherMethod(
     arg: [String!]!
@@ -187,3 +220,15 @@ enum TestImport_Enum @imported(
 }
 
 ### Imported Objects END ###
+
+### Imported Envs START ###
+
+type TestImport_Env @imported(
+  uri: "testimport.uri.eth",
+  namespace: "TestImport",
+  nativeType: "Env"
+) {
+  enviroProp: String!
+}
+
+### Imported Envs END ###

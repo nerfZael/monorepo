@@ -6,18 +6,17 @@ import { runCLI } from "@polywrap/test-env-js";
 const HELP = `Usage: polywrap [options] [command]
 
 Options:
-  -h, --help                  display help for command
+  -h, --help                   display help for command
 
 Commands:
-  app|a                       Build/generate types for your app
-  build|b [options]           Builds a wrapper
-  codegen|g [options]         Auto-generate Wrapper Types
-  create|c                    Create a new project with polywrap CLI
-  deploy|d [options]          Deploys/Publishes a Polywrap
-  plugin|p                    Build/generate types for the plugin
-  infra|i [options] <action>  Manage infrastructure for your wrapper
-  run|r [options] <workflow>  Runs workflow script
-  help [command]              display help for command
+  build|b [options]            Build Polywrap Projects (type: interface, wasm)
+  codegen|g [options]          Generate Code For Polywrap Projects
+  create|c                     Create New Projects
+  deploy|d [options]           Deploys Polywrap Projects
+  infra|i [options] <action>   Modular Infrastructure-As-Code Orchestrator
+  run|r [options]              Runs Workflows
+  docgen|o [options] <action>  Generate wrapper documentation
+  help [command]               display help for command
 `;
 
 describe("e2e tests for no help", () => {
@@ -30,6 +29,6 @@ describe("e2e tests for no help", () => {
 
     expect(code).toEqual(0);
     expect(error).toBe("");
-    expect(clearStyle(output)).toContain(HELP);
+    expect(clearStyle(output)).toEqual(HELP);
   });
 });

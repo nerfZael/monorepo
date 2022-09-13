@@ -1,19 +1,17 @@
-import { PolywrapClient, defaultIpfsProviders } from "@polywrap/client-js";
+import { PolywrapClient } from "@polywrap/client-js";
+import { defaultIpfsProviders } from "@polywrap/client-config-builder-js";
 import { GetPathToTestWrappers } from "@polywrap/test-cases";
 import {
+  buildAndDeployWrapper,
+  ensAddresses,
   initTestEnvironment,
   providers,
-  ensAddresses,
-  stopTestEnvironment,
-  buildAndDeployWrapper,
+  stopTestEnvironment
 } from "@polywrap/test-env-js";
 
 import { ensResolverPlugin } from "..";
 import { ipfsPlugin } from "@polywrap/ipfs-plugin-js";
-import { ethereumPlugin } from "@polywrap/ethereum-plugin-js";
-
-import fs from "fs";
-import path from "path";
+import { ethereumPlugin, Connections, Connection } from "@polywrap/ethereum-plugin-js";
 
 jest.setTimeout(300000);
 
@@ -30,7 +28,7 @@ describe("ENS Resolver Plugin", () => {
       wrapperAbsPath: wrapperAbsPath,
       ipfsProvider: providers.ipfs,
       ethereumProvider: providers.ethereum,
-      ensName: "simple-storage.eth",
+      ensName: "cool.wrapper.eth"
     });
 
     wrapperEnsDomain = ensDomain;
@@ -41,29 +39,31 @@ describe("ENS Resolver Plugin", () => {
           uri: "wrap://ens/ipfs.polywrap.eth",
           plugin: ipfsPlugin({
             provider: providers.ipfs,
-            fallbackProviders: defaultIpfsProviders,
-          }),
+            fallbackProviders: defaultIpfsProviders
+          })
         },
         {
           uri: "wrap://ens/ethereum.polywrap.eth",
           plugin: ethereumPlugin({
-            networks: {
-              testnet: {
-                provider: providers.ethereum,
+            connections: new Connections({
+              networks: {
+                testnet: new Connection({
+                  provider: providers.ethereum
+                }),
               },
-            },
-            defaultNetwork: "testnet",
-          }),
+              defaultNetwork: "testnet"
+            })
+          })
         },
         {
           uri: "wrap://ens/ens-resolver.polywrap.eth",
           plugin: ensResolverPlugin({
             addresses: {
-              testnet: ensAddresses.ensAddress,
-            },
-          }),
-        },
-      ],
+              testnet: ensAddresses.ensAddress
+            }
+          })
+        }
+      ]
     });
   });
 
@@ -78,17 +78,8 @@ describe("ENS Resolver Plugin", () => {
     expect(resolution.error).toBeFalsy();
     expect(resolution.wrapper).toBeTruthy();
 
-    const expectedSchema = await fs.promises.readFile(
-      path.resolve(wrapperAbsPath, "build/schema.graphql"),
-      { encoding: "utf-8" }
-    );
-
-    const schema = await resolution.wrapper?.getSchema(client);
-
-    expect(schema).toEqual(expectedSchema);
-
     const manifest = await resolution.wrapper?.getManifest(
-      { type: "polywrap" },
+      {},
       client
     );
 

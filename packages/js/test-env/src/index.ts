@@ -6,9 +6,14 @@ import spawn from "spawn-command";
 import axios from "axios";
 import fs from "fs";
 import yaml from "js-yaml";
-import { deserializePolywrapManifest, Uri } from "@polywrap/core-js";
+import { Uri } from "@polywrap/core-js";
 import { PolywrapClient } from "@polywrap/client-js";
-import { ethereumPlugin } from "@polywrap/ethereum-plugin-js";
+import {
+  ethereumPlugin,
+  Connections,
+  Connection,
+} from "@polywrap/ethereum-plugin-js";
+import { deserializePolywrapManifest } from "@polywrap/polywrap-manifest-types-js";
 
 export const ensAddresses = {
   ensAddress: "0xe78A0F7E598Cc8b0Bb87894B0F60dD2a88d6a8Ab",
@@ -192,8 +197,13 @@ export const runCLI = async (options: {
   };
 };
 
-export async function buildWrapper(wrapperAbsPath: string): Promise<void> {
-  const manifestPath = `${wrapperAbsPath}/polywrap.yaml`;
+export async function buildWrapper(
+  wrapperAbsPath: string,
+  manifestPathOverride?: string
+): Promise<void> {
+  const manifestPath = manifestPathOverride
+    ? path.join(wrapperAbsPath, manifestPathOverride)
+    : `${wrapperAbsPath}/polywrap.yaml`;
   const {
     exitCode: buildExitCode,
     stdout: buildStdout,
@@ -249,17 +259,22 @@ export async function buildAndDeployWrapper({
 
   const ethereumPluginUri = "wrap://ens/ethereum.polywrap.eth";
 
+  const testnetConnection = {
+    networks: {
+      testnet: new Connection({
+        provider: ethereumProvider,
+      }),
+    },
+    defaultNetwork: "testnet",
+  };
+
+  const connections = new Connections(testnetConnection);
   const client = new PolywrapClient({
     plugins: [
       {
         uri: ethereumPluginUri,
         plugin: ethereumPlugin({
-          networks: {
-            testnet: {
-              provider: ethereumProvider,
-            },
-          },
-          defaultNetwork: "testnet",
+          connections,
         }),
       },
     ],
@@ -316,7 +331,6 @@ export async function buildAndDeployWrapper({
   });
 
   // manually configure manifests
-
   const { __type, ...polywrapManifest } = deserializePolywrapManifest(
     fs.readFileSync(manifestPath, "utf-8")
   );
@@ -325,14 +339,17 @@ export async function buildAndDeployWrapper({
     tempManifestPath,
     yaml.dump({
       ...polywrapManifest,
-      deploy: `./${tempDeployManifestFilename}`,
+      extensions: {
+        ...polywrapManifest.extensions,
+        deploy: `./${tempDeployManifestFilename}`,
+      },
     })
   );
 
   fs.writeFileSync(
     tempDeployManifestPath,
     yaml.dump({
-      format: "0.0.1-prealpha.1",
+      format: "0.1.0",
       stages: {
         ipfsDeploy: {
           package: "ipfs",

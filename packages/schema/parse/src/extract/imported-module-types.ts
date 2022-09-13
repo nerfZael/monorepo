@@ -1,14 +1,11 @@
 import {
   createImportedModuleDefinition,
-  createInterfaceImplementedDefinition,
   createMethodDefinition,
   createPropertyDefinition,
-  ImportedModuleDefinition,
-  MapDefinition,
-  Abi,
-} from "../abi";
+} from "..";
 import { extractImportedDefinition } from "./utils/imported-types-utils";
 import {
+  extractEnvDirective,
   extractInputValueDefinition,
   extractListType,
   extractNamedType,
@@ -25,13 +22,18 @@ import {
   NonNullTypeNode,
   ObjectTypeDefinitionNode,
 } from "graphql";
+import {
+  ImportedModuleDefinition,
+  MapDefinition,
+  WrapAbi,
+} from "@polywrap/wrap-manifest-types-js";
 
 const visitorEnter = (
   importedModuleTypes: ImportedModuleDefinition[],
   state: State
 ) => ({
   ObjectTypeDefinition: (node: ObjectTypeDefinitionNode) => {
-    const imported = extractImportedDefinition(node, true);
+    const imported = extractImportedDefinition(node, "module");
 
     if (!imported) {
       return;
@@ -47,9 +49,6 @@ const visitorEnter = (
       namespace: imported.namespace,
       nativeType: imported.nativeType,
       isInterface: isInterface,
-      interfaces: node.interfaces?.map((x) =>
-        createInterfaceImplementedDefinition({ type: x.name.value })
-      ),
       comment: node.description?.value,
     });
     importedModuleTypes.push(importedType);
@@ -72,7 +71,7 @@ const visitorEnter = (
       map: def
         ? ({ ...def, name: node.name.value } as MapDefinition)
         : undefined,
-      required: def && def.required ? true : false,
+      required: def && def.required ? true : undefined,
     });
 
     const method = createMethodDefinition({
@@ -80,6 +79,17 @@ const visitorEnter = (
       return: returnType,
       comment: node.description?.value,
     });
+
+    const envDirDefinition = extractEnvDirective(node);
+
+    if (envDirDefinition) {
+      method.env = envDirDefinition;
+    }
+
+    if (!importDef.methods) {
+      importDef.methods = [];
+    }
+
     importDef.methods.push(method);
     state.currentMethod = method;
     state.currentReturn = returnType;
@@ -110,15 +120,15 @@ const visitorLeave = (state: State) => ({
     state.currentArgument = undefined;
   },
   NonNullType: (_node: NonNullTypeNode) => {
-    state.nonNullType = false;
+    state.nonNullType = undefined;
   },
 });
 
-export const getImportedModuleTypesVisitor = (abi: Abi): ASTVisitor => {
+export const getImportedModuleTypesVisitor = (abi: WrapAbi): ASTVisitor => {
   const state: State = {};
 
   return {
-    enter: visitorEnter(abi.importedModuleTypes, state),
+    enter: visitorEnter(abi.importedModuleTypes || [], state),
     leave: visitorLeave(state),
   };
 };

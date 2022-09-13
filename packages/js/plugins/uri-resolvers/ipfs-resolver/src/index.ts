@@ -1,12 +1,12 @@
 import {
-  Module,
-  Args_tryResolveUri,
   Args_getFile,
+  Args_tryResolveUri,
   Bytes,
-  UriResolver_MaybeUriOrManifest,
-  manifest,
-  Ipfs_Module,
   Client,
+  Ipfs_Module,
+  manifest,
+  Module,
+  UriResolver_MaybeUriOrManifest,
 } from "./wrap";
 
 import { PluginFactory } from "@polywrap/core-js";
@@ -14,13 +14,10 @@ import { PluginFactory } from "@polywrap/core-js";
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
 const isIPFS = require("is-ipfs");
 
-export interface IpfsResolverPluginConfig extends Record<string, unknown> {
-  provider: string;
-  fallbackProviders?: string[];
-}
+type NoConfig = Record<string, never>;
 
-export class IpfsResolverPlugin extends Module<IpfsResolverPluginConfig> {
-  // uri-resolver.core.web3api.eth
+export class IpfsResolverPlugin extends Module<NoConfig> {
+  // uri-resolver.core.polywrap.eth
   public async tryResolveUri(
     args: Args_tryResolveUri,
     _client: Client
@@ -34,31 +31,29 @@ export class IpfsResolverPlugin extends Module<IpfsResolverPluginConfig> {
       return { manifest: null, uri: null };
     }
 
-    const manifestSearchPatterns = ["polywrap.json"];
+    const manifestSearchPattern = "wrap.info";
 
-    let manifest: string | undefined;
+    let manifest: Bytes | undefined;
 
-    for (const manifestSearchPattern of manifestSearchPatterns) {
-      try {
-        const manifestResult = await Ipfs_Module.cat(
-          {
-            cid: `${args.path}/${manifestSearchPattern}`,
-            options: {
-              timeout: 5000,
-            },
+    try {
+      const manifestResult = await Ipfs_Module.cat(
+        {
+          cid: `${args.path}/${manifestSearchPattern}`,
+          options: {
+            timeout: 5000,
           },
-          _client
-        );
+        },
+        _client
+      );
 
-        if (manifestResult.data) {
-          manifest = Buffer.from(manifestResult.data).toString("utf-8");
-        } else {
-          throw manifestResult.error;
-        }
-      } catch (e) {
-        // TODO: logging
-        // https://github.com/web3-api/monorepo/issues/33
+      if (manifestResult.data) {
+        manifest = Buffer.from(manifestResult.data);
+      } else {
+        throw new Error();
       }
+    } catch (e) {
+      // TODO: logging
+      // https://github.com/polywrap/monorepo/issues/33
     }
 
     return { uri: null, manifest: manifest ?? null };
@@ -108,11 +103,9 @@ export class IpfsResolverPlugin extends Module<IpfsResolverPluginConfig> {
   }
 }
 
-export const ipfsResolverPlugin: PluginFactory<IpfsResolverPluginConfig> = (
-  opts: IpfsResolverPluginConfig
-) => {
+export const ipfsResolverPlugin: PluginFactory<NoConfig> = () => {
   return {
-    factory: () => new IpfsResolverPlugin(opts),
+    factory: () => new IpfsResolverPlugin({}),
     manifest,
   };
 };

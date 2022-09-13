@@ -1,25 +1,25 @@
 import { parseSchema } from "../";
-import { addFirstLast } from "../transform/addFirstLast";
-import { extendType } from "../transform/extendType";
+import { addFirstLast, extendType } from "../transform";
 import {
   createObjectDefinition,
   createScalarPropertyDefinition,
+  createModuleDefinition,
+  createMethodDefinition,
+  createImportedModuleDefinition,
+} from "../abi";
+import {
+  WrapAbi,
+  ImportedModuleDefinition,
+  MethodDefinition,
+  ModuleDefinition,
   ObjectDefinition,
   PropertyDefinition,
-  Abi,
-  createModuleDefinition,
-  ModuleDefinition,
-  createMethodDefinition,
-  MethodDefinition,
-  createImportedModuleDefinition,
-  ImportedModuleDefinition,
-  createEnvDefinition
-} from "../abi";
+} from "@polywrap/wrap-manifest-types-js";
 
 const schema1 = `
 type MyType {
   prop1: String!
-  prop2: String!
+  prop2: String
 }
 
 type AnotherType {
@@ -60,7 +60,7 @@ type TestImport_Module @imported(
 const schema2 = `
 type MyType {
   prop1: String!
-  prop2: String!
+  prop2: String
 }
 
 type AnotherType {
@@ -73,11 +73,8 @@ describe("Polywrap Schema Abi Transformations", () => {
     const abi = parseSchema(schema1, {
       transforms: [addFirstLast],
     });
-    const expected: Abi = {
-      envType: createEnvDefinition({}),
-      enumTypes: [],
-      importedEnumTypes: [],
-      interfaceTypes: [],
+    const expected: WrapAbi = {
+      version: "0.1",
       objectTypes: [
         {
           ...createObjectDefinition({ type: "MyType" }),
@@ -94,8 +91,7 @@ describe("Polywrap Schema Abi Transformations", () => {
             {
               ...createScalarPropertyDefinition({
                 name: "prop2",
-                type: "String",
-                required: true
+                type: "String"
               }),
               first: null,
               last: true,
@@ -142,7 +138,6 @@ describe("Polywrap Schema Abi Transformations", () => {
                     ...createScalarPropertyDefinition({
                       type: "String",
                       name: "arg2",
-                      required: false,
                     }),
                     first: null,
                     last: null
@@ -151,7 +146,6 @@ describe("Polywrap Schema Abi Transformations", () => {
                     ...createScalarPropertyDefinition({
                       type: "Boolean",
                       name: "arg3",
-                      required: false,
                     }),
                     first: null,
                     last: true
@@ -205,7 +199,6 @@ describe("Polywrap Schema Abi Transformations", () => {
                 return: createScalarPropertyDefinition({
                   type: "Boolean",
                   name: "method3",
-                  required: false
                 })
               }),
               first: null,
@@ -213,7 +206,6 @@ describe("Polywrap Schema Abi Transformations", () => {
             } as MethodDefinition,
           ],
         } as ModuleDefinition,
-      importedObjectTypes: [],
       importedModuleTypes: [
         {
           ...createImportedModuleDefinition({
@@ -287,11 +279,8 @@ describe("Polywrap Schema Abi Transformations", () => {
         }),
       ],
     });
-    const expected: Abi = {
-      envType: createEnvDefinition({}),
-      enumTypes: [],
-      interfaceTypes: [],
-      importedEnumTypes: [],
+    const expected: WrapAbi = {
+      version: "0.1",
       objectTypes: [
         {
           ...createObjectDefinition({ type: "MyType" }),
@@ -307,8 +296,7 @@ describe("Polywrap Schema Abi Transformations", () => {
             {
               ...createScalarPropertyDefinition({
                 name: "prop2",
-                type: "String",
-                required: true
+                type: "String"
               }),
               foo: "bar",
             },
@@ -330,8 +318,6 @@ describe("Polywrap Schema Abi Transformations", () => {
           foo: "bar",
         } as ObjectDefinition,
       ],
-      importedObjectTypes: [],
-      importedModuleTypes: [],
     };
 
     expect(abi).toMatchObject(expected);

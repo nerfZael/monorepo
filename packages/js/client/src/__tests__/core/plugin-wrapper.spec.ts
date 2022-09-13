@@ -1,9 +1,7 @@
-import {
-  PolywrapClientConfig,
-  PolywrapClient,
-  createPolywrapClient,
-  PluginModule,
-} from "../..";
+import { PolywrapClient, PluginModule } from "../..";
+import { getClient } from "../utils/getClient";
+import { WrapManifest } from "@polywrap/wrap-manifest-types-js";
+
 
 jest.setTimeout(200000);
 
@@ -13,22 +11,12 @@ const defaultPlugins = [
   "wrap://ens/ethereum.polywrap.eth",
   "wrap://ens/http.polywrap.eth",
   "wrap://ens/js-logger.polywrap.eth",
-  "wrap://ens/uts46.polywrap.eth",
-  "wrap://ens/sha3.polywrap.eth",
-  "wrap://ens/graph-node.polywrap.eth",
   "wrap://ens/fs.polywrap.eth",
   "wrap://ens/fs-resolver.polywrap.eth",
   "wrap://ens/ipfs-resolver.polywrap.eth",
 ];
 
 describe("plugin-wrapper", () => {
-  const getClient = async (config?: Partial<PolywrapClientConfig>) => {
-    return await createPolywrapClient(
-      {},
-      config
-    );
-  };
-
   const mockMapPlugin = () => {
     interface Config extends Record<string, unknown> {
       map: Map<string, number>;
@@ -54,10 +42,7 @@ describe("plugin-wrapper", () => {
       factory: () => new MockMapPlugin({
         map: new Map().set("a", 1).set("b", 2)
       }),
-      manifest: {
-        schema: ``,
-        implements: [],
-      },
+      manifest: {} as WrapManifest,
     };
   };
 
@@ -70,10 +55,7 @@ describe("plugin-wrapper", () => {
           uri: implementationUri,
           plugin: {
             factory: () => ({} as PluginModule<{}>),
-            manifest: {
-              schema: "",
-              implements: [],
-            },
+            manifest: {} as WrapManifest,
           },
         },
       ],
@@ -81,96 +63,7 @@ describe("plugin-wrapper", () => {
 
     const pluginUris = client.getPlugins().map((x) => x.uri.uri);
 
-    expect(pluginUris).toEqual([implementationUri].concat(defaultPlugins));
-  });
-
-  test("getSchema -- plugin schema", async () => {
-    const client = await getClient();
-    const schema: string = await client.getSchema(
-      "wrap://ens/js-logger.polywrap.eth"
-    );
-
-    expect(schema).toStrictEqual(
-      `### Polywrap Header START ###
-scalar UInt
-scalar UInt8
-scalar UInt16
-scalar UInt32
-scalar Int
-scalar Int8
-scalar Int16
-scalar Int32
-scalar Bytes
-scalar BigInt
-scalar BigNumber
-scalar JSON
-scalar Map
-
-directive @imported(
-  uri: String!
-  namespace: String!
-  nativeType: String!
-) on OBJECT | ENUM
-
-directive @imports(
-  types: [String!]!
-) on OBJECT
-
-directive @capability(
-  type: String!
-  uri: String!
-  namespace: String!
-) repeatable on OBJECT
-
-directive @enabled_interface on OBJECT
-
-directive @annotate(type: String!) on FIELD
-
-### Polywrap Header END ###
-
-type Module implements Logger_Module @imports(
-  types: [
-    "Logger_Module",
-    "Logger_LogLevel"
-  ]
-) {
-  log(
-    level: Logger_LogLevel!
-    message: String!
-  ): Boolean!
-}
-
-### Imported Modules START ###
-
-type Logger_Module @imported(
-  uri: "ens/logger.core.polywrap.eth",
-  namespace: "Logger",
-  nativeType: "Module"
-) {
-  log(
-    level: Logger_LogLevel!
-    message: String!
-  ): Boolean!
-}
-
-### Imported Modules END ###
-
-### Imported Objects START ###
-
-enum Logger_LogLevel @imported(
-  uri: "ens/logger.core.polywrap.eth",
-  namespace: "Logger",
-  nativeType: "LogLevel"
-) {
-  DEBUG
-  INFO
-  WARN
-  ERROR
-}
-
-### Imported Objects END ###
-`
-    );
+    expect(pluginUris).toEqual(defaultPlugins.concat([implementationUri]));
   });
 
   it("plugin map types", async () => {
@@ -185,36 +78,28 @@ enum Logger_LogLevel @imported(
       ],
     });
 
-    const queryEnv = await client.query({
+    const getResult = await client.invoke({
       uri: implementationUri,
-      query: `
-      query {
-        getMap
-      }
-    `,
+      method: "getMap",
     });
 
-    expect(queryEnv.errors).toBeFalsy();
-    expect(queryEnv.data).toBeTruthy();
-    expect(queryEnv.data?.getMap).toMatchObject(
+    expect(getResult.error).toBeFalsy();
+    expect(getResult.data).toBeTruthy();
+    expect(getResult.data).toMatchObject(
       new Map<string, number>().set("a", 1).set("b", 2)
     );
 
-    const mutationEnv = await client.query({
+    const updateResult = await client.invoke({
       uri: implementationUri,
-      query: `
-      mutation {
-        updateMap(map: $map)
-      }
-      `,
-      variables: {
+      method: "updateMap",
+      args: {
         map: new Map<string, number>().set("b", 1).set("c", 5),
       },
     });
 
-    expect(mutationEnv.errors).toBeFalsy();
-    expect(mutationEnv.data).toBeTruthy();
-    expect(mutationEnv.data?.updateMap).toMatchObject(
+    expect(updateResult.error).toBeFalsy();
+    expect(updateResult.data).toBeTruthy();
+    expect(updateResult.data).toMatchObject(
       new Map<string, number>().set("a", 1).set("b", 3).set("c", 5)
     );
   });
@@ -224,10 +109,7 @@ enum Logger_LogLevel @imported(
 
     const pluginPackage = {
       factory: () => ({} as PluginModule<{}>),
-      manifest: {
-        schema: "",
-        implements: [],
-      },
+      manifest: {} as WrapManifest,
     };
 
     const client = new PolywrapClient({
@@ -255,18 +137,12 @@ enum Logger_LogLevel @imported(
 
     const pluginPackage1 = {
       factory: () => ({} as PluginModule<{}>),
-      manifest: {
-        schema: "",
-        implements: [],
-      },
+      manifest: {} as WrapManifest,
     };
 
     const pluginPackage2 = {
       factory: () => ({} as PluginModule<{}>),
-      manifest: {
-        schema: "",
-        implements: [],
-      },
+      manifest: {} as WrapManifest,
     };
 
     const client = new PolywrapClient({
@@ -290,6 +166,13 @@ enum Logger_LogLevel @imported(
       .getPlugins()
       .find((x) => x.uri.uri === pluginUriToOverride);
 
-    expect(registeredPlugin?.plugin).toEqual(pluginPackage1);
+    expect(registeredPlugin?.plugin).toEqual(pluginPackage2);
   });
+
+  test("get manifest should fetch wrap manifest from plugin", async () => {
+    const client = await getClient()
+    const manifest = await client.getManifest("ens/ipfs.polywrap.eth")
+    expect(manifest.type).toEqual("plugin")
+    expect(manifest.name).toEqual("Ipfs")
+  })
 });

@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { Uri, Client, MaybeAsync, executeMaybeAsyncFunction } from ".";
+import { Client, MaybeAsync, executeMaybeAsyncFunction } from ".";
+
+import { WrapManifest } from "@polywrap/wrap-manifest-types-js";
 
 /**
  * Invocable plugin method.
@@ -16,8 +18,7 @@ export type PluginMethod<
 
 export abstract class PluginModule<
   TConfig,
-  TEnv extends Record<string, unknown> = Record<string, unknown>,
-  TClientEnv extends Record<string, unknown> = TEnv
+  TEnv extends Record<string, unknown> = Record<string, unknown>
 > {
   private _env: TEnv;
   private _config: TConfig;
@@ -34,23 +35,8 @@ export abstract class PluginModule<
     return this._config;
   }
 
-  public _wrap_load_env(env: TEnv): void {
+  public setEnv(env: TEnv): void {
     this._env = env;
-  }
-
-  public async _wrap_sanitize_env(
-    clientEnv: TClientEnv,
-    client: Client
-  ): Promise<TEnv> {
-    if (this.getMethod("sanitizeEnv")) {
-      return this._wrap_invoke<TClientEnv, TEnv>(
-        "sanitizeEnv",
-        clientEnv,
-        client
-      );
-    } else {
-      return Promise.resolve(clientEnv as TEnv);
-    }
   }
 
   public async _wrap_invoke<
@@ -87,18 +73,9 @@ export abstract class PluginModule<
   }
 }
 
-/** The plugin package's manifest */
-export interface PluginPackageManifest {
-  /** The Wrapper's schema */
-  schema: string;
-
-  /** All interface schemas implemented by this plugin. */
-  implements: Uri[];
-}
-
 export type PluginPackage<TConfig> = {
   factory: () => PluginModule<TConfig>;
-  manifest: PluginPackageManifest;
+  manifest: WrapManifest;
 };
 
 export type PluginFactory<TConfig> = (

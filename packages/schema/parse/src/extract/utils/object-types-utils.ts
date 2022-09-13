@@ -1,11 +1,4 @@
-import {
-  createArrayDefinition,
-  createPropertyDefinition,
-  GenericDefinition,
-  MapDefinition,
-  ObjectDefinition,
-  PropertyDefinition,
-} from "../../abi";
+import { createArrayDefinition, createPropertyDefinition } from "../..";
 import { parseMapType } from "./map-utils";
 import { setPropertyType } from "./property-utils";
 
@@ -15,10 +8,16 @@ import {
   NamedTypeNode,
   StringValueNode,
 } from "graphql";
+import {
+  GenericDefinition,
+  MapDefinition,
+  ObjectDefinition,
+  PropertyDefinition,
+} from "@polywrap/wrap-manifest-types-js";
 
 export interface State {
   currentType?: ObjectDefinition;
-  currentProperty?: PropertyDefinition | undefined;
+  currentProperty?: PropertyDefinition;
   nonNullType?: boolean;
 }
 
@@ -36,20 +35,15 @@ export function extractAnnotateDirective(
 
   if (node.directives) {
     for (const dir of node.directives) {
-      switch (dir.name.value) {
-        case "annotate": {
-          type = (dir.arguments?.find((arg) => arg.name.value === "type")
-            ?.value as StringValueNode).value;
-          if (!type) {
-            throw new Error(
-              `Annotate directive: ${node.name.value} has invalid arguments`
-            );
-          }
-          def = parseMapType(type, name);
-          break;
+      if (dir.name.value === "annotate") {
+        type = (dir.arguments?.find((arg) => arg.name.value === "type")
+          ?.value as StringValueNode).value;
+        if (!type) {
+          throw new Error(
+            `Annotate directive: ${node.name.value} has invalid arguments`
+          );
         }
-        default:
-          throw new Error(`Unknown directive ${dir.name.value}`);
+        def = parseMapType(type, name);
       }
     }
   }
@@ -81,10 +75,13 @@ export function extractFieldDefinition(
     name: name,
     map: def ? (def as MapDefinition) : undefined,
     comment: node.description?.value,
-    required: def && def.required ? true : false,
+    required: def && def.required,
   });
 
   state.currentProperty = property;
+  if (!importDef.properties) {
+    importDef.properties = [];
+  }
   importDef.properties.push(property);
 }
 
@@ -115,7 +112,7 @@ export function extractNamedType(node: NamedTypeNode, state: State): void {
     required: state.nonNullType,
   });
 
-  state.nonNullType = false;
+  state.nonNullType = undefined;
 }
 
 export function extractListType(state: State): void {
@@ -135,5 +132,5 @@ export function extractListType(state: State): void {
     required: state.nonNullType,
   });
   state.currentProperty = property.array;
-  state.nonNullType = false;
+  state.nonNullType = undefined;
 }

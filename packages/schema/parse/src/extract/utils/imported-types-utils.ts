@@ -1,10 +1,11 @@
-import { ImportedDefinition, MODULE_NAME } from "../../abi";
+import { isImportedEnvType, isImportedModuleType } from "../..";
 
 import { DirectiveNode, TypeDefinitionNode } from "graphql";
+import { ImportedDefinition } from "@polywrap/wrap-manifest-types-js";
 
 export function extractImportedDefinition(
   node: TypeDefinitionNode,
-  moduleTypes = false
+  type?: "module" | "env"
 ): ImportedDefinition | undefined {
   if (!node.directives) {
     return undefined;
@@ -20,11 +21,12 @@ export function extractImportedDefinition(
   }
 
   const typeName = node.name.value;
-  const moduleIdentifier = `_${MODULE_NAME}`;
 
   if (
-    (moduleTypes && !typeName.endsWith(moduleIdentifier)) ||
-    (!moduleTypes && typeName.endsWith(moduleIdentifier))
+    (type === "module" && !isImportedModuleType(typeName)) ||
+    (type !== "module" && isImportedModuleType(typeName)) ||
+    (type === "env" && !isImportedEnvType(typeName)) ||
+    (type !== "env" && isImportedEnvType(typeName))
   ) {
     return undefined;
   }

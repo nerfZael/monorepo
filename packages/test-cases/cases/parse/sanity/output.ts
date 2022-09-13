@@ -7,6 +7,7 @@ import {
   createEnumRef,
   createEnvDefinition,
   createImportedEnumDefinition,
+  createImportedEnvDefinition,
   createImportedModuleDefinition,
   createImportedObjectDefinition,
   createInterfaceDefinition,
@@ -20,10 +21,11 @@ import {
   createObjectRef,
   createScalarDefinition,
   createScalarPropertyDefinition,
-  Abi,
+  WrapAbi,
 } from "../../../../schema/parse/src/abi";
 
-export const abi: Abi = {
+export const abi: WrapAbi = {
+  version: "0.1",
   interfaceTypes: [
     createInterfaceDefinition({
       type: "TestImport",
@@ -38,37 +40,19 @@ export const abi: Abi = {
     }),
   ],
   envType: createEnvDefinition({
-      sanitized: {
-        ...createObjectDefinition({ type: "Env" }),
-        properties: [
-          createScalarPropertyDefinition({
-            name: "prop",
-            type: "String",
-            required: true,
-          }),
-          createScalarPropertyDefinition({
-            name: "propM",
-            type: "Int",
-            required: true,
-          })
-        ],
-      },
-      client: {
-        ...createObjectDefinition({ type: "ClientEnv" }),
-        properties: [
-          createScalarPropertyDefinition({
-            name: "prop",
-            type: "String",
-            required: true,
-          }),
-          createScalarPropertyDefinition({
-            name: "propM",
-            type: "String",
-            required: false,
-          }),
-        ],
-      },
-    }),
+    properties: [
+      createScalarPropertyDefinition({
+        name: "prop",
+        type: "String",
+        required: true,
+      }),
+      createScalarPropertyDefinition({
+        name: "propM",
+        type: "Int",
+        required: true,
+      })
+    ],
+  }),
   objectTypes: [
     {
       ...createObjectDefinition({
@@ -85,7 +69,7 @@ export const abi: Abi = {
         createScalarPropertyDefinition({
           name: "optStr",
           type: "String",
-          required: false,
+          required: undefined,
           comment: "optStr comment",
         }),
         createScalarPropertyDefinition({
@@ -96,7 +80,7 @@ export const abi: Abi = {
         createScalarPropertyDefinition({
           name: "optU",
           type: "UInt",
-          required: false,
+          required: undefined,
         }),
         createScalarPropertyDefinition({
           name: "u8",
@@ -141,7 +125,7 @@ export const abi: Abi = {
         createScalarPropertyDefinition({
           name: "optBigint",
           type: "BigInt",
-          required: false,
+          required: undefined,
         }),
         createScalarPropertyDefinition({
           name: "bignumber",
@@ -151,7 +135,7 @@ export const abi: Abi = {
         createScalarPropertyDefinition({
           name: "optBignumber",
           type: "BigNumber",
-          required: false,
+          required: undefined,
         }),
         createScalarPropertyDefinition({
           name: "json",
@@ -161,7 +145,7 @@ export const abi: Abi = {
         createScalarPropertyDefinition({
           name: "optJson",
           type: "JSON",
-          required: false,
+          required: undefined,
         }),
         createScalarPropertyDefinition({
           name: "bytes",
@@ -181,7 +165,7 @@ export const abi: Abi = {
         createArrayPropertyDefinition({
           name: "uOptArray",
           type: "[UInt]",
-          required: false,
+          required: undefined,
           item: createScalarDefinition({
             name: "uOptArray",
             type: "UInt",
@@ -191,21 +175,21 @@ export const abi: Abi = {
         createArrayPropertyDefinition({
           name: "optUOptArray",
           type: "[UInt]",
-          required: false,
+          required: undefined,
           item: createScalarDefinition({
             name: "optUOptArray",
             type: "UInt",
-            required: false,
+            required: undefined,
           }),
         }),
         createArrayPropertyDefinition({
           name: "optStrOptArray",
           type: "[String]",
-          required: false,
+          required: undefined,
           item: createScalarDefinition({
             name: "optStrOptArray",
             type: "String",
-            required: false,
+            required: undefined,
           }),
         }),
         createArrayPropertyDefinition({
@@ -230,11 +214,11 @@ export const abi: Abi = {
           item: createArrayDefinition({
             name: "uOptArrayOptArray",
             type: "[UInt32]",
-            required: false,
+            required: undefined,
             item: createScalarDefinition({
               name: "uOptArrayOptArray",
               type: "UInt32",
-              required: false,
+              required: undefined,
             }),
           }),
         }),
@@ -245,7 +229,7 @@ export const abi: Abi = {
           item: createArrayDefinition({
             name: "uArrayOptArrayArray",
             type: "[[UInt32]]",
-            required: false,
+            required: undefined,
             item: createArrayDefinition({
               name: "uArrayOptArrayArray",
               type: "[UInt32]",
@@ -261,11 +245,11 @@ export const abi: Abi = {
         createArrayPropertyDefinition({
           name: "crazyArray",
           type: "[[[[UInt32]]]]",
-          required: false,
+          required: undefined,
           item: createArrayDefinition({
             name: "crazyArray",
             type: "[[[UInt32]]]",
-            required: false,
+            required: undefined,
             item: createArrayDefinition({
               name: "crazyArray",
               type: "[[UInt32]]",
@@ -273,7 +257,7 @@ export const abi: Abi = {
               item: createArrayDefinition({
                 name: "crazyArray",
                 type: "[UInt32]",
-                required: false,
+                required: undefined,
                 item: createScalarDefinition({
                   name: "crazyArray",
                   type: "UInt32",
@@ -339,18 +323,50 @@ export const abi: Abi = {
         createArrayPropertyDefinition({
           name: "optEnumArray",
           type: "[CustomEnum]",
-          required: false,
+          required: undefined,
           item: createEnumRef({
             name: "optEnumArray",
             type: "CustomEnum",
-            required: false,
+            required: undefined,
           }),
         }),
         createMapPropertyDefinition({
-          name: "map1",
+          name: "map",
           type: "Map<String, Int>",
-          key: createMapKeyDefinition({ name: "map1", type: "String", required: true }),
-          value: createScalarDefinition({ name: "map1", type: "Int" }),
+          key: createMapKeyDefinition({ name: "map", type: "String", required: true }),
+          value: createScalarDefinition({ name: "map", type: "Int" }),
+          required: true
+        }),
+        createMapPropertyDefinition({
+          name: "mapOfArr",
+          type: "Map<String, [Int]>",
+          key: createMapKeyDefinition({ name: "mapOfArr", type: "String", required: true }),
+          value: createArrayDefinition({
+            name: "mapOfArr",
+            type: "[Int]",
+            item: createScalarDefinition({ name: "mapOfArr", type: "Int", required: true }),
+            required: true
+          }),
+          required: true
+        }),
+        createMapPropertyDefinition({
+          name: "mapOfObj",
+          type: "Map<String, AnotherType>",
+          key: createMapKeyDefinition({ name: "mapOfObj", type: "String", required: true }),
+          value: createObjectRef({ name: "mapOfObj", type: "AnotherType", required: true }),
+          required: true
+        }),
+        createMapPropertyDefinition({
+          name: "mapOfArrOfObj",
+          type: "Map<String, [AnotherType]>",
+          key: createMapKeyDefinition({ name: "mapOfArrOfObj", type: "String", required: true }),
+          value: createArrayDefinition({
+            name: "mapOfArrOfObj",
+            type: "[AnotherType]",
+            item: createObjectRef({ name: "mapOfArrOfObj", type: "AnotherType", required: true }),
+            required: true
+          }),
+          required: true
         }),
       ],
     },
@@ -376,7 +392,7 @@ export const abi: Abi = {
         createScalarPropertyDefinition({
           name: "fieldA",
           type: "String",
-          required: false,
+          required: undefined,
         }),
         createScalarPropertyDefinition({
           name: "fieldB",
@@ -391,7 +407,7 @@ export const abi: Abi = {
         createInterfaceImplementedDefinition({ type: "UserObject" }),
       ],
       properties: [
-        createScalarPropertyDefinition({ name: "fieldA", type: "String", required: false }),
+        createScalarPropertyDefinition({ name: "fieldA", type: "String", required: undefined }),
         createScalarPropertyDefinition({ name: "fieldB", type: "Int", required: true }),
         createScalarPropertyDefinition({ name: "fieldC", type: "UInt32", required: true }),
       ],
@@ -409,7 +425,7 @@ export const abi: Abi = {
         createScalarPropertyDefinition({
           name: "anotherProp",
           type: "String",
-          required: false,
+          required: undefined,
           comment: "anotherProp comment",
         }),
         createScalarPropertyDefinition({
@@ -471,13 +487,6 @@ export const abi: Abi = {
       methods: [
         {
           ...createMethodDefinition({
-            name: "sanitizeEnv",
-            return: createObjectPropertyDefinition({ name: "sanitizeEnv", type: "Env", required: true }),
-            arguments: [createObjectPropertyDefinition({ name: "env", type: "ClientEnv", required: true })],
-          })
-        },
-        {
-          ...createMethodDefinition({
             name: "moduleMethod",
             return: createArrayPropertyDefinition({
               name: "moduleMethod",
@@ -486,7 +495,7 @@ export const abi: Abi = {
               item: createScalarDefinition({
                 name: "moduleMethod",
                 type: "Int",
-                required: false,
+                required: undefined,
               }),
             }),
             comment: "moduleMethod comment",
@@ -611,6 +620,47 @@ export const abi: Abi = {
             }),
           ],
         },
+        {
+          ...createMethodDefinition({
+            name: "methodRequireEnv",
+            env: {
+              required: true,
+            },
+            return: createObjectPropertyDefinition({
+              name: "methodRequireEnv",
+              type: "Env",
+              required: true
+            }),
+            arguments: [
+              createScalarPropertyDefinition({
+                name: "arg",
+                type: "String",
+                required: true,
+              }),
+            ],
+          }),
+          
+        },
+        {
+          ...createMethodDefinition({
+            name: "methodOptionalEnv",
+            env: {
+              required: false,
+            },
+            return: createObjectPropertyDefinition({
+              name: "methodOptionalEnv",
+              type: "Env",
+            }),
+            arguments: [
+              createScalarPropertyDefinition({
+                name: "arg",
+                type: "String",
+                required: true,
+              }),
+            ],
+          }),
+          
+        },
       ],
     },
   importedObjectTypes: [
@@ -660,7 +710,7 @@ export const abi: Abi = {
         createObjectPropertyDefinition({
           name: "circular",
           type: "TestImport_Object",
-          required: false,
+          required: undefined,
         }),
       ],
     },
@@ -731,7 +781,7 @@ export const abi: Abi = {
             createScalarPropertyDefinition({
               name: "optStr",
               type: "String",
-              required: false,
+              required: undefined,
             }),
             createScalarPropertyDefinition({
               name: "u",
@@ -741,7 +791,7 @@ export const abi: Abi = {
             createScalarPropertyDefinition({
               name: "optU",
               type: "UInt",
-              required: false,
+              required: undefined,
             }),
             createArrayPropertyDefinition({
               name: "uArrayArray",
@@ -751,11 +801,11 @@ export const abi: Abi = {
               item: createArrayDefinition({
                 name: "uArrayArray",
                 type: "[UInt]",
-                required: false,
+                required: undefined,
                 item: createScalarDefinition({
                   name: "uArrayArray",
                   type: "UInt",
-                  required: false,
+                  required: undefined,
                 }),
               }),
             }),
@@ -771,7 +821,7 @@ export const abi: Abi = {
               item: createScalarDefinition({
                 name: "anotherMethod",
                 type: "Int32",
-                required: false,
+                required: undefined,
               }),
             }),
           }),
@@ -844,9 +894,49 @@ export const abi: Abi = {
               ...createEnumPropertyDefinition({
                 name: "optEnum",
                 type: "TestImport_Enum",
-                required: false,
+                required: undefined,
               }),
             },
+          ],
+        },
+        {
+          ...createMethodDefinition({
+            name: "envMethod",
+            env: {
+              required: true,
+            },
+            return: createObjectPropertyDefinition({
+              name: "envMethod",
+              type: "TestImport_Env",
+              required: true,
+            }),
+          }),
+          arguments: [
+            createScalarPropertyDefinition({
+              name: "arg",
+              type: "String",
+              required: true,
+            }),
+          ],
+        },
+        {
+          ...createMethodDefinition({
+            name: "optEnvMethod",
+            env: {
+              required: false,
+            },
+            return: createObjectPropertyDefinition({
+              name: "optEnvMethod",
+              type: "TestImport_Env",
+              required: undefined,
+            }),
+          }),
+          arguments: [
+            createScalarPropertyDefinition({
+              name: "arg",
+              type: "String",
+              required: true,
+            }),
           ],
         },
       ],
@@ -881,4 +971,21 @@ export const abi: Abi = {
       ],
     },
   ],
+  importedEnvTypes: [
+    {
+      ...createImportedEnvDefinition({
+        uri: "testimport.uri.eth",
+        namespace: "TestImport",
+        nativeType: "Env",
+        comment: "TestImport_Env comment",
+      }),
+      properties: [
+        createScalarPropertyDefinition({
+          name: "envProp",
+          type: "UInt8",
+          required: true,
+        }),
+      ],
+    },
+  ]
 };

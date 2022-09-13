@@ -1,14 +1,16 @@
 import { AbiTransforms } from ".";
-import {
-  ArrayDefinition,
-  createEnumRef,
-  createObjectRef,
-  GenericDefinition,
-  PropertyDefinition,
-  Abi,
-} from "../abi";
+import { createEnumRef, createObjectRef } from "..";
 
-export const finalizePropertyDef = (abi: Abi): AbiTransforms => {
+import {
+  AnyDefinition,
+  ArrayDefinition,
+  GenericDefinition,
+  MapDefinition,
+  PropertyDefinition,
+  WrapAbi,
+} from "@polywrap/wrap-manifest-types-js";
+
+export const finalizePropertyDef = (abi: WrapAbi): AbiTransforms => {
   return {
     enter: {
       // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -22,7 +24,7 @@ export const finalizePropertyDef = (abi: Abi): AbiTransforms => {
 
 export function populatePropertyType(
   property: PropertyDefinition,
-  abi: Abi
+  abi: WrapAbi
 ): void {
   let propertyType: GenericDefinition | undefined;
   if (property.array) {
@@ -37,6 +39,7 @@ export function populatePropertyType(
   } else if (property.enum) {
     propertyType = property.enum;
   } else if (property.map) {
+    populateMapType(property.map, abi);
     propertyType = property.map;
   } else {
     throw Error("Property type is undefined, this should never happen.");
@@ -46,7 +49,55 @@ export function populatePropertyType(
   property.required = propertyType.required;
 }
 
-function populateArrayType(array: ArrayDefinition, abi: Abi) {
+function populateMapType(map: MapDefinition, abi: WrapAbi) {
+  let baseTypeFound = false;
+
+  let currentType: AnyDefinition = map;
+  while (!baseTypeFound) {
+    if (currentType.map) {
+      currentType = currentType.map;
+      populateMapType(currentType as MapDefinition, abi);
+    } else if (currentType.array) {
+      currentType = currentType.array;
+      populateArrayType(currentType as ArrayDefinition, abi);
+    } else if (
+      currentType.scalar ||
+      currentType.object ||
+      currentType.enum ||
+      currentType.unresolvedObjectOrEnum
+    ) {
+      baseTypeFound = true;
+    } else {
+      throw Error(
+        `This should never happen, MapDefinition is malformed.\n${JSON.stringify(
+          map,
+          null,
+          2
+        )}`
+      );
+    }
+  }
+
+  if (map.array) {
+    map.value = map.array;
+  } else if (map.unresolvedObjectOrEnum) {
+    map.value = resolveObjectOrEnumKind(map, abi);
+  } else if (map.scalar) {
+    map.value = map.scalar;
+  } else if (map.enum) {
+    map.value = map.enum;
+  } else if (map.map) {
+    map.value = map.map;
+  } else {
+    map.value = map.object;
+  }
+
+  if (!map.value) {
+    throw Error("Map isn't valid.");
+  }
+}
+
+function populateArrayType(array: ArrayDefinition, abi: WrapAbi) {
   let baseTypeFound = false;
 
   let currentArray = array;
@@ -95,7 +146,7 @@ function populateArrayType(array: ArrayDefinition, abi: Abi) {
 
 function resolveObjectOrEnumKind(
   property: PropertyDefinition,
-  abi: Abi
+  abi: WrapAbi
 ): GenericDefinition {
   if (!property.unresolvedObjectOrEnum) {
     throw Error("Type reference is undefined, this should never happen.");
@@ -104,29 +155,36 @@ function resolveObjectOrEnumKind(
   const unresolved = property.unresolvedObjectOrEnum;
 
   // Check to see if the type is a part of the custom types defined inside the schema (objects, enums, envs)
-  let customType: GenericDefinition | undefined = abi.objectTypes.find(
-    (type) => type.type === unresolved.type
-  );
+  let customType: GenericDefinition | undefined =
+    abi.objectTypes &&
+    abi.objectTypes.find((type) => type.type === unresolved.type);
 
   customType = customType
     ? customType
-    : abi.importedObjectTypes.find((type) => type.type === unresolved.type);
+    : abi.importedObjectTypes &&
+      abi.importedObjectTypes.find((type) => type.type === unresolved.type);
 
   const envType = abi.envType;
   customType = customType
     ? customType
-    : envType.client?.type === unresolved.type
-    ? envType.client
-    : envType.sanitized?.type === unresolved.type
-    ? envType.sanitized
+    : envType?.type === unresolved.type
+    ? envType
     : undefined;
 
+  customType = customType
+    ? customType
+    : abi.importedEnvTypes &&
+      abi.importedEnvTypes.find((type) => type.type === unresolved.type);
+
   if (!customType) {
-    customType = abi.enumTypes.find((type) => type.type === unresolved.type);
+    customType =
+      abi.enumTypes &&
+      abi.enumTypes.find((type) => type.type === unresolved.type);
 
     customType = customType
       ? customType
-      : abi.importedEnumTypes.find((type) => type.type === unresolved.type);
+      : abi.importedEnumTypes &&
+        abi.importedEnumTypes.find((type) => type.type === unresolved.type);
 
     if (!customType) {
       throw new Error(`Unsupported type ${unresolved.type}`);
@@ -138,7 +196,7 @@ function resolveObjectOrEnumKind(
       type: unresolved.type,
     });
 
-    property.unresolvedObjectOrEnum = null;
+    property.unresolvedObjectOrEnum = undefined;
 
     return property.enum;
   } else {
@@ -148,7 +206,7 @@ function resolveObjectOrEnumKind(
       type: property.unresolvedObjectOrEnum.type,
     });
 
-    property.unresolvedObjectOrEnum = null;
+    property.unresolvedObjectOrEnum = undefined;
 
     return property.object;
   }

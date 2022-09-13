@@ -9,12 +9,12 @@ import {
 import {
   PolywrapClient,
   PolywrapClientConfig,
-  defaultIpfsProviders,
 } from "@polywrap/client-js";
+import { defaultIpfsProviders } from "@polywrap/client-config-builder-js";
 import { GetPathToTestWrappers } from "@polywrap/test-cases";
 import { ipfsPlugin } from "@polywrap/ipfs-plugin-js";
 import { ensResolverPlugin } from "@polywrap/ens-resolver-plugin-js";
-import { ethereumPlugin } from "@polywrap/ethereum-plugin-js";
+import { ethereumPlugin, Connections, Connection } from "@polywrap/ethereum-plugin-js";
 import fs from "fs";
 import path from "path";
 
@@ -50,12 +50,14 @@ describe("Filesystem plugin", () => {
         {
           uri: "wrap://ens/ethereum.polywrap.eth",
           plugin: ethereumPlugin({
-            networks: {
-              testnet: {
-                provider: providers.ethereum,
+            connections: new Connections({
+              networks: {
+                testnet: new Connection({
+                  provider: providers.ethereum
+                })
               },
-            },
-            defaultNetwork: "testnet",
+              defaultNetwork: "testnet"
+            })
           }),
         },
       ],
@@ -82,8 +84,8 @@ describe("Filesystem plugin", () => {
       method: "deployContract",
       args: {
         connection: {
-          networkNameOrChainId: "testnet"
-        }
+          networkNameOrChainId: "testnet",
+        },
       },
     });
 
@@ -91,31 +93,21 @@ describe("Filesystem plugin", () => {
     expect(deploy.data).toBeTruthy();
     expect(deploy.data?.indexOf("0x")).toBeGreaterThan(-1);
 
-    // get the schema
-    const schema = await client.getSchema(fsUri);
-    const expectedSchema = await fs.promises.readFile(
-      `${fsPath}/schema.graphql`,
-      "utf-8"
-    );
-
-    expect(schema).toBe(expectedSchema);
-
     // get the manifest
-    const manifest = await client.getManifest(fsUri, { type: "polywrap" });
+    const manifest = await client.getManifest(fsUri);
 
     expect(manifest).toBeTruthy();
-    expect(manifest.language).toBe("wasm/assemblyscript");
+    expect(manifest.version).toBe("0.1");
+    expect(manifest.type).toEqual("wasm");
 
     // get a file
     const file = await client.getFile(fsUri, {
-      path: "polywrap.json",
-      encoding: "utf-8",
+      path: "wrap.info",
     });
-    const expectedFile = await fs.promises.readFile(
-      `${fsPath}/polywrap.json`,
-      "utf-8"
-    );
 
-    expect(file).toBe(expectedFile);
+    const expectedFile = await fs.promises.readFile(`${fsPath}/wrap.info`);
+
+    const expectedInfo = Uint8Array.from(expectedFile);
+    expect(file).toStrictEqual(expectedInfo);
   });
 });

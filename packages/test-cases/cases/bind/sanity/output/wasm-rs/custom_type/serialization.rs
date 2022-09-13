@@ -20,6 +20,7 @@ use crate::{
     get_custom_enum_value,
     sanitize_custom_enum_value
 };
+use crate::CustomMapValue;
 
 pub fn serialize_custom_type(args: &CustomType) -> Result<Vec<u8>, EncodeError> {
     let mut encoder_context = Context::new();
@@ -30,7 +31,7 @@ pub fn serialize_custom_type(args: &CustomType) -> Result<Vec<u8>, EncodeError> 
 }
 
 pub fn write_custom_type<W: Write>(args: &CustomType, writer: &mut W) -> Result<(), EncodeError> {
-    writer.write_map_length(&37)?;
+    writer.write_map_length(&42)?;
     writer.context().push("str", "String", "writing property");
     writer.write_string("str")?;
     writer.write_string(&args.str)?;
@@ -225,6 +226,54 @@ pub fn write_custom_type<W: Write>(args: &CustomType, writer: &mut W) -> Result<
         writer.write_optional_i32(&item.map(|f| f as i32))
     })?;
     writer.context().pop();
+    writer.context().push("map", "Map<String, i32>", "writing property");
+    writer.write_string("map")?;
+    writer.write_ext_generic_map(&args.map, |writer, key| {
+        writer.write_string(key)
+    }, |writer, value| {
+        writer.write_i32(value)
+    })?;
+    writer.context().pop();
+    writer.context().push("mapOfArr", "Map<String, Vec<i32>>", "writing property");
+    writer.write_string("mapOfArr")?;
+    writer.write_ext_generic_map(&args.map_of_arr, |writer, key| {
+        writer.write_string(key)
+    }, |writer, value| {
+        writer.write_array(value, |writer, item| {
+            writer.write_i32(item)
+        })
+    })?;
+    writer.context().pop();
+    writer.context().push("mapOfObj", "Map<String, AnotherType>", "writing property");
+    writer.write_string("mapOfObj")?;
+    writer.write_ext_generic_map(&args.map_of_obj, |writer, key| {
+        writer.write_string(key)
+    }, |writer, value| {
+        AnotherType::write(value, writer)
+    })?;
+    writer.context().pop();
+    writer.context().push("mapOfArrOfObj", "Map<String, Vec<AnotherType>>", "writing property");
+    writer.write_string("mapOfArrOfObj")?;
+    writer.write_ext_generic_map(&args.map_of_arr_of_obj, |writer, key| {
+        writer.write_string(key)
+    }, |writer, value| {
+        writer.write_array(value, |writer, item| {
+            AnotherType::write(item, writer)
+        })
+    })?;
+    writer.context().pop();
+    writer.context().push("mapCustomValue", "Map<String, Option<CustomMapValue>>", "writing property");
+    writer.write_string("mapCustomValue")?;
+    writer.write_ext_generic_map(&args.map_custom_value, |writer, key| {
+        writer.write_string(key)
+    }, |writer, value| {
+        if value.is_some() {
+            CustomMapValue::write(value.as_ref().as_ref().unwrap(), writer)
+        } else {
+            writer.write_nil()
+        }
+    })?;
+    writer.context().pop();
     Ok(())
 }
 
@@ -297,6 +346,16 @@ pub fn read_custom_type<R: Read>(reader: &mut R) -> Result<CustomType, DecodeErr
     let mut _enum_array: Vec<CustomEnum> = vec![];
     let mut _enum_array_set = false;
     let mut _opt_enum_array: Option<Vec<Option<CustomEnum>>> = None;
+    let mut _map: Map<String, i32> = Map::<String, i32>::new();
+    let mut _map_set = false;
+    let mut _map_of_arr: Map<String, Vec<i32>> = Map::<String, Vec<i32>>::new();
+    let mut _map_of_arr_set = false;
+    let mut _map_of_obj: Map<String, AnotherType> = Map::<String, AnotherType>::new();
+    let mut _map_of_obj_set = false;
+    let mut _map_of_arr_of_obj: Map<String, Vec<AnotherType>> = Map::<String, Vec<AnotherType>>::new();
+    let mut _map_of_arr_of_obj_set = false;
+    let mut _map_custom_value: Map<String, Option<CustomMapValue>> = Map::<String, Option<CustomMapValue>>::new();
+    let mut _map_custom_value_set = false;
 
     while num_of_fields > 0 {
         num_of_fields -= 1;
@@ -598,6 +657,68 @@ pub fn read_custom_type<R: Read>(reader: &mut R) -> Result<CustomType, DecodeErr
                 })?;
                 reader.context().pop();
             }
+            "map" => {
+                reader.context().push(&field, "Map<String, i32>", "type found, reading property");
+                _map = reader.read_ext_generic_map(|reader| {
+                    reader.read_string()
+                }, |reader| {
+                    reader.read_i32()
+                })?;
+                _map_set = true;
+                reader.context().pop();
+            }
+            "mapOfArr" => {
+                reader.context().push(&field, "Map<String, Vec<i32>>", "type found, reading property");
+                _map_of_arr = reader.read_ext_generic_map(|reader| {
+                    reader.read_string()
+                }, |reader| {
+                    reader.read_array(|reader| {
+                        reader.read_i32()
+                    })
+                })?;
+                _map_of_arr_set = true;
+                reader.context().pop();
+            }
+            "mapOfObj" => {
+                reader.context().push(&field, "Map<String, AnotherType>", "type found, reading property");
+                _map_of_obj = reader.read_ext_generic_map(|reader| {
+                    reader.read_string()
+                }, |reader| {
+                    let object = AnotherType::read(reader)?;
+                    Ok(object)
+                })?;
+                _map_of_obj_set = true;
+                reader.context().pop();
+            }
+            "mapOfArrOfObj" => {
+                reader.context().push(&field, "Map<String, Vec<AnotherType>>", "type found, reading property");
+                _map_of_arr_of_obj = reader.read_ext_generic_map(|reader| {
+                    reader.read_string()
+                }, |reader| {
+                    reader.read_array(|reader| {
+                        let object = AnotherType::read(reader)?;
+                        Ok(object)
+                    })
+                })?;
+                _map_of_arr_of_obj_set = true;
+                reader.context().pop();
+            }
+            "mapCustomValue" => {
+                reader.context().push(&field, "Map<String, Option<CustomMapValue>>", "type found, reading property");
+                _map_custom_value = reader.read_ext_generic_map(|reader| {
+                    reader.read_string()
+                }, |reader| {
+                    let mut object: Option<CustomMapValue> = None;
+                    if !reader.is_next_nil()? {
+                        object = Some(CustomMapValue::read(reader)?);
+                    } else {
+                        object = None;
+                    }
+                    Ok(object)
+                })?;
+                _map_custom_value_set = true;
+                reader.context().pop();
+            }
             err => return Err(DecodeError::UnknownFieldName(err.to_string())),
         }
     }
@@ -667,6 +788,21 @@ pub fn read_custom_type<R: Read>(reader: &mut R) -> Result<CustomType, DecodeErr
     if !_enum_array_set {
         return Err(DecodeError::MissingField("enumArray: [CustomEnum].".to_string()));
     }
+    if !_map_set {
+        return Err(DecodeError::MissingField("map: Map<String, Int>.".to_string()));
+    }
+    if !_map_of_arr_set {
+        return Err(DecodeError::MissingField("mapOfArr: Map<String, [Int]>.".to_string()));
+    }
+    if !_map_of_obj_set {
+        return Err(DecodeError::MissingField("mapOfObj: Map<String, AnotherType>.".to_string()));
+    }
+    if !_map_of_arr_of_obj_set {
+        return Err(DecodeError::MissingField("mapOfArrOfObj: Map<String, [AnotherType]>.".to_string()));
+    }
+    if !_map_custom_value_set {
+        return Err(DecodeError::MissingField("mapCustomValue: Map<String, CustomMapValue>.".to_string()));
+    }
 
     Ok(CustomType {
         str: _str,
@@ -706,5 +842,10 @@ pub fn read_custom_type<R: Read>(reader: &mut R) -> Result<CustomType, DecodeErr
         opt_enum: _opt_enum,
         enum_array: _enum_array,
         opt_enum_array: _opt_enum_array,
+        map: _map,
+        map_of_arr: _map_of_arr,
+        map_of_obj: _map_of_obj,
+        map_of_arr_of_obj: _map_of_arr_of_obj,
+        map_custom_value: _map_custom_value,
     })
 }

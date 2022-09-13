@@ -6,14 +6,14 @@ import { ProjectType, supportedLangs } from "../../commands";
 
 const HELP = `Usage: polywrap create|c [options] [command]
 
-Create a new project with polywrap CLI
+Create New Projects
 
 Options:
   -h, --help                          display help for command
 
 Commands:
   wasm [options] <language> <name>    Create a Polywrap wasm wrapper langs:
-                                      assemblyscript, interface
+                                      assemblyscript, rust, interface
   app [options] <language> <name>     Create a Polywrap application langs:
                                       typescript-node, typescript-react
   plugin [options] <language> <name>  Create a Polywrap plugin langs:

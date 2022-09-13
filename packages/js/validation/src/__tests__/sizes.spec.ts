@@ -4,6 +4,7 @@ import {
   ValidationFailReason,
   WasmPackageValidator,
 } from "..";
+import { convertWrapInfoJsonToMsgpack } from "./utils";
 
 jest.setTimeout(200000);
 
@@ -18,29 +19,37 @@ const assertValidWrapper = async (wrapperPath: string) => {
     maxModuleSize: 1_000_000,
     maxNumberOfFiles: 1000,
   });
-
   const result = await validator.validate(reader);
-
   expect(result.valid).toBeTruthy();
   expect(result.failReason).toEqual(undefined);
 };
 
 describe("manifests", () => {
-  it("sanity", async () => {
+  beforeAll(() => {
+    convertWrapInfoJsonToMsgpack();
+  });
+
+  test("sanity package-size-over-100-kb", async () => {
     await assertValidWrapper(
-      path.join(testWrappersPath, "wrapper-size-over-100-kb")
+      path.join(testWrappersPath, "package-size-over-100-kb")
     );
+  });
+
+  test("sanity file-size-over-100-kb", async () => {
     await assertValidWrapper(
       path.join(testWrappersPath, "file-size-over-100-kb")
     );
+  });
+
+  test("sanity module-size-over-100-kb", async () => {
     await assertValidWrapper(
       path.join(testWrappersPath, "module-size-over-100-kb")
     );
   });
 
-  it("fails validating a large wrapper", async () => {
+  it("fails validating a large package", async () => {
     const reader = new FileSystemPackageReader(
-      path.join(testWrappersPath, "wrapper-size-over-100-kb")
+      path.join(testWrappersPath, "package-size-over-100-kb")
     );
 
     const validator = new WasmPackageValidator({
@@ -53,7 +62,7 @@ describe("manifests", () => {
     const result = await validator.validate(reader);
 
     expect(result.valid).toBeFalsy();
-    expect(result.failReason).toEqual(ValidationFailReason.WrapperTooLarge);
+    expect(result.failReason).toEqual(ValidationFailReason.PackageTooLarge);
   });
 
   it("fails validating a large file", async () => {
@@ -69,7 +78,6 @@ describe("manifests", () => {
     });
 
     const result = await validator.validate(reader);
-
     expect(result.valid).toBeFalsy();
     expect(result.failReason).toEqual(ValidationFailReason.FileTooLarge);
   });

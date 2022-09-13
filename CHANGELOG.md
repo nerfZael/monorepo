@@ -1,3 +1,144 @@
+# Polywrap Origin (0.7.0)
+## Bugs
+* [PR-1158](https://github.com/polywrap/toolchain/pull/1158) `@polywrap/client-config-builder-js`: The following plugins have been removed from the default config, and replaced with their WebAssembly wrapper equivalents available at the same URIs:
+  * `wrap://ens/uts46.polywrap.eth`
+  * `wrap://ens/sha3.polywrap.eth`
+  * `wrap://ens/graph-node.polywrap.eth`
+* [PR-1213](https://github.com/polywrap/toolchain/pull/1213) `@polywrap/schema-bind`: Nested map types (i.e. `Map<K, Map<K, V>>`) are now properly supported for `wasm/rust` and `wasm/assemblyscript`.
+* [PR-1213](https://github.com/polywrap/toolchain/pull/1213) `@polywrap/wasm-as`: Nested map types (i.e. `Map<K, Map<K, V>>`) are now properly msgpack encoded.
+* [PR-1212](https://github.com/polywrap/toolchain/pull/1212) `polywrap` CLI: `wasm/rust` build image now uses the `build-deps` cargo extension to properly build dependencies in a seperate Dockerfile layer, enabling the caching of compiled artifacts.
+
+## Breaking Changes
+* [PR-1217](https://github.com/polywrap/toolchain/pull/1217) `@polywrap/schema-bind`: `plugin/typescript` and `app/typescript` bindings have been updated to improve type safety, and no longer accept generic properties for all method argument types.
+* [PR-1051](https://github.com/polywrap/toolchain/pull/1051) `polywrap` CLI: `polywrap plugin codegen` and `polywrap app codegen` commands have been moved into the `polywrap codegen`, which can now generate types for any Polywrap project (wasm, plugin, app).
+* [PR-1154](https://github.com/polywrap/toolchain/pull/1154) `@polywrap/schema-bind`: The `wasm/assemblyscript` bindings have been updated to use `Box<T> | null` for all optional scalar types, instead of the `Option<T>` class used before.
+* [PR-1154](https://github.com/polywrap/toolchain/pull/1154) `@polywrap/ws-plugin-js`: The WebSocket plugin's schema has been updated to use `UInt32` for socket IDs, instead of `Int32`.
+
+# Polywrap Origin (0.6.0)
+## Features
+* [PR-1100](https://github.com/polywrap/toolchain/pull/1100) `polywrap` CLI: A new manifest named `polywrap.test.yaml` has been added, which encapsulates workflows and validation scripts.
+* [PR-1100](https://github.com/polywrap/toolchain/pull/1100) `@polywrap/polywrap-manifest-types-js`: `polywrap.test` manifest types have been added.
+* [PR-1100](https://github.com/polywrap/toolchain/pull/1100) `@polywrap/polywrap-manifest-schemas`: `polywrap.test` manifest schema has been added.
+
+## Bugs
+* [PR-1205](https://github.com/polywrap/toolchain/pull/1205) `polywrap` CLI: The `run` command's output now has deterministic ordering for text emitted from both workflow & validation steps.
+* [PR-1194](https://github.com/polywrap/toolchain/pull/1194) `@polywrap/msgpack-js`: Nested `Map<K, V>` serialization is now supported.
+* [PR-1199](https://github.com/polywrap/toolchain/pull/1199) `@polywrap/core-js` `@polywrap/client-js`: Runtime type inference has been improved to be compatible with JavaScript minimization optimizations where the `Class.name` static property is removed.
+* [PR-1196](https://github.com/polywrap/toolchain/pull/1196) `@polywrap/core-js`: All `WrapperCache` interface methods have been updated to return `MaybeAsync` promises, allowing developers to implement async logic.
+
+## Breaking Changes
+* [PR-1100](https://github.com/polywrap/toolchain/pull/1100) `polywrap` CLI: `run` command no longer accepts the `<workflow>` argument, and instead uses the new `polywrap.test.yaml` manifest.
+* [PR-1100](https://github.com/polywrap/toolchain/pull/1100) `@polywrap/client-js`: The `run` method has been removed.
+* [PR-1100](https://github.com/polywrap/toolchain/pull/1100) `@polywrap/core-js`: All `Workflow` related types have been removed, and migrated into the manifest packages and the CLI.
+
+# Polywrap Origin (0.5.0)
+## Features
+* [PR-1042](https://github.com/polywrap/toolchain/pull/1042) `@polywrap/client-js`: The `PolywrapClientConfig` now has a `tracerConfig: Partial<TracerConfig>` property, allowing users to easily configure the tracing level, and various toggles related to tracing.
+* [PR-1042](https://github.com/polywrap/toolchain/pull/1042) `polywrap` CLI: Added the `tracer` infra module, allowing developers to easily spin up an OpenTelemetry compatible tracing server. This can be used to gather runtime tracelog events from the `PolywrapClient`.
+* [PR-1042](https://github.com/polywrap/toolchain/pull/1042) `@polywrap/tracing-js`: The `@Tracer.traceMethod()` function decorator now has an optional `TracingLevel` argument.
+* [PR-1143](https://github.com/polywrap/toolchain/pull/1143) `@polywrap/ethereum-plugin-js`: The `EthereumPluginConfig` now has a `connections` property, which takes an instance of the `Connections` class. This new implementation makes configuring new network connections at runtime easier and more application developer friendly.
+* [PR-1045](https://github.com/polywrap/toolchain/pull/1045) `@polywrap/client-config-builder-js`: The `ClientConfigBuilder` has been added to make building & customizing `PolywrapClientConfigs` easier than before with a simple user friendly interface.
+* [PR-1036](https://github.com/polywrap/toolchain/pull/1036) `@polywrap/client-js`: Added the `wrapperCache: WrapperCache` property to the `PolywrapClientConfig` interface.
+* [PR-1036](https://github.com/polywrap/toolchain/pull/1036) `@polywrap/core-js`: Added the `WrapperCache` core type, along with a `SimpleCache` implementation that persists wrappers within a map.
+
+## Bugs
+* [PR-1186](https://github.com/polywrap/toolchain/pull/1186) `@polywrap/schema-bind`: Using a `Map<K, V>` type within the `Map`'s value (`V`) template argument has been fixed.
+* [PR-1179](https://github.com/polywrap/toolchain/pull/1179) `polywrap` CLI: Improved the readability of the `polywrap build -v` command's output from the Docker child process.
+
+## Breaking Changes
+* [PR-1042](https://github.com/polywrap/toolchain/pull/1042) `@polywrap/client-js`: The `PolywrapClientConfig`'s `tracingEnabled` property has been removed, and replaced by `tracerConfig`.
+* [PR-1143](https://github.com/polywrap/toolchain/pull/1143) `@polywrap/ethereum-plugin-js`: The `EthereumPluginConfig`'s `networks` property has been removed, and replaced by `connections`.
+* [PR-1045](https://github.com/polywrap/toolchain/pull/1045) `@polywrap/client-js`: The `getDefaultClientConfig()` & `defaultIpfsProviders` exports have been moved to the `@polywrap/client-config-builder-js` package.
+
+# Polywrap Origin (0.4.1)
+## Features
+* [PR-1171](https://github.com/polywrap/monorepo/pull/1171) `@polywrap/schema-bind`: Handle reserve words (keywords) for object, enum, and method names.
+
+## Bugs
+* [PR-1168](https://github.com/polywrap/monorepo/pull/1168) `@polywrap/schema-bind`: Fix imported optional map issue in Rust bindings.
+* [PR-1167](https://github.com/polywrap/monorepo/pull/1167) Remove all `wrap-man` folders, that were published to solve the plugin's circular dependency issue.
+
+# Polywrap Origin (0.4.0)
+## Features
+* [PR-1091](https://github.com/polywrap/monorepo/pull/1091) `@polywrap/polywrap-manifest-schemas`: Polywrap project manifests (`polywrap.yaml`, `polywrap.app.yaml`, `polywrap.plugin.yaml`) have a new format `0.2.0`, which restructures the manifest into 3 top level properties: `project`, `source`, and `extensions`. Additionally all project manifests can be given the `polywrap.yaml` file name.
+* [PR-1092](https://github.com/polywrap/monorepo/pull/1092) `@polywrap/ws-plugin-js`: Added a WebSocket plugin.
+* [PR-1096](https://github.com/polywrap/monorepo/pull/1096) `@polywrap/client-js`: Expose the `noValidate` option for the `client.getManifest(...)` method.
+* [PR-820](https://github.com/polywrap/monorepo/pull/820) `polywrap` CLI: `docgen` command added, allowing wrapper developers to easily generate documentation. Supported formats: schema, docusaurus, jsdoc.
+* [PR-1068](https://github.com/polywrap/monorepo/pull/1068) `@polywrap/ethereum-plugin-js`: `requestAccounts` method added, which utilizes the `eth_requestAccounts` RPC method on the configured provider.
+
+## Bugs
+* [PR-1142](https://github.com/polywrap/monorepo/pull/1142) `wasm/rust`: `Map<K, V>` bugs have been fixed.
+* [PR-1140](https://github.com/polywrap/monorepo/pull/1140) `polywrap` CLI: Added a check to make sure the Docker daemon is running, and provides an informative error if it is not.
+* [PR-1090](https://github.com/polywrap/monorepo/pull/1090) `polywrap/wrap-manifest-types-js`: Remove runtime schema bundling, which required file system access.
+* [PR-1050](https://github.com/polywrap/monorepo/pull/1050) `polywrap` CLI: Errors encounted in child processes now output both `stdtypesout` and `stderr`, allowing easier end-user debugging.
+
+## Breaking Changes
+* [PR-1046](https://github.com/polywrap/monorepo/pull/1046) `polywrap` CLI: `schema.graphql` has been removed from wrapper build artifacts. `polywrap.plugin.yaml` has been removed from plugin build artifacts.
+* [PR-1046](https://github.com/polywrap/monorepo/pull/1046) `@polywrap/schema-bind`: `schema.ts` has been removed from typescript bindings.
+* [PR-1046](https://github.com/polywrap/monorepo/pull/1046) `@polywrap/schema-bind` `@polywrap/schema-compose`: `WrapAbi` is now used in all places, instead of schema documents.
+* [PR-1095](https://github.com/polywrap/monorepo/pull/1095) `@polywrap/http-plugin-js`: Use `Map<String, String>` for `headers` & `urlParams`.
+* [PR-1073](https://github.com/polywrap/monorepo/pull/1073) `@polywrap/schema-compose`: The `ComposerOptions` property `schemas: SchemaFile[]` has been replaced with `schema: SchemaFile`. Additionally the function argument `schemas: SchemaFile[]` on the `resolveImports` function has bee replaced with `schema: SchemaFile`.
+* [PR-1073](https://github.com/polywrap/monorepo/pull/1073) `@polywrap/wrap-manifest-types-js`: In `WrapAbi` format `0.1`, properties no longer accept `null` and instead use `undefined`. 
+* [PR-1073](https://github.com/polywrap/monorepo/pull/1073) `@polywrap/schema-parse`: `Abi` export renamed to `WrapAbi`.
+
+# Polywrap Origin (0.3.0)
+## Features
+* [PR-1034](https://github.com/polywrap/monorepo/pull/1034) `@polywrap/wrap-manifest-schemas`, `@polywrap/wrap-manifest-types-js`: Added a JSON-schema for the `wrap.info`'s `abi` field.
+* [PR-1058](https://github.com/polywrap/monorepo/pull/1058) `polywrap` CLI: Deploy results can now be output to a file using the `-o, --output-file <path>` option of the `deploy` command.
+
+## Bugs
+* [PR-1034](https://github.com/polywrap/monorepo/pull/1034) `@polywrap/wrap-manifest-schemas`, `@polywrap/polywrap-manifest-schemas`: Version numbers for the manifest's `format: ...` field have been changed to only include `<major>.<minor>` (ex: `0.1.0` is now `0.1`). This is because there cannot be a change to a pure interface that is a `<patch>`.
+* [PR-1034](https://github.com/polywrap/monorepo/pull/1034) `@polywrap/package-validation`: The `wrap.info.abi` field is no longer being validated via schema rendering, and is instead utilizing the newly added JSON-schema.
+* [PR-1054](https://github.com/polywrap/monorepo/pull/1054) `polywrap` CLI: Improved `wasm/rust` build times by refactoring the build image's Dockerfile, helping reduce cache invalidations.
+* [PR-1053](https://github.com/polywrap/monorepo/pull/1053) `@polywrap/wasm-as`: Increased minor version of as-bignumber. The new version has a bug fix for the toFixed method, which was incorrectly printing numbers when a decimal number was rounded to an integer.
+
+## Breaking Changes
+* [PR-1034](https://github.com/polywrap/monorepo/pull/1034) `@polywrap/wrap-manifest-types-js`: `deserializeWrapManifest` is now `async`.
+
+# Polywrap Origin (0.2.0)
+## Bugs
+* [PR-1040](https://github.com/polywrap/monorepo/pull/1040) `polywrap` CLI: Added proper CORS handling for the IPFS node located within the `eth-ens-ipfs` default infra module.
+
+## Breaking Changes
+* [PR-1035](https://github.com/polywrap/monorepo/pull/1035) `polywrap.meta` Manifest: Removed the `queries` property from version `0.1.0` of the manifest.
+* [PR-1039](https://github.com/polywrap/monorepo/pull/1039) `@polywrap/ipfs-resolver-plugin-js`: Remove the `IpfsResolverPlugin`'s config, as it was never being used.
+
+# Polywrap Origin (0.1.1)
+## Features
+* [PR-1017](https://github.com/polywrap/monorepo/pull/1017) `@polywrap/templates`, `polywrap` CLI: Rust wasm wrapper project template has been added, and made available via the `polywrap create ...` CLI command.
+
+## Bugs
+* [PR-1016](https://github.com/polywrap/monorepo/pull/1016) `polywrap` CLI: Improved logging when running workflows using the `polywrap run ...` command.
+* [PR-924](https://github.com/polywrap/monorepo/pull/924) `@polywrap/schema-parse`, `@polywrap/schema-bind`: Complex `Map<Key, Value>` type usages within wrapper schemas lead to incorrect bindings being generated. Additional tests + fixes have been added.
+
+# Polywrap Origin (0.1.0)
+![Public Release Announcement (2)](https://user-images.githubusercontent.com/5522128/177474776-76886b67-6554-41a9-841b-939728e273ca.png)
+
+*"Good evening traveler, welcome to Polywrap, a planet in the WRAP galaxy. We're happy to have you here. Ask around, I'm sure someone can help you navigate this place..." - NPC*  
+
+https://polywrap.io/
+
+# Polywrap 0.0.1-prealpha.93
+## Breaking Changes
+* [PR-986](https://github.com/polywrap/monorepo/pull/986) WRAP build artifacts have been refined:
+  * Wasm module name changed from `module.wasm` to `wrap.wasm`
+  * Polywrap manifests are no longer written to build folder (except for project metadata).
+  * The `wrap.info` is now the primary manifest file describing the wrapper:
+    * `{ version, type, name, abi }`
+    * [source](https://github.com/polywrap/monorepo/blob/7fd5b2faad2cb664044edde133d8e068d685d97a/packages/js/manifests/wrap/src/formats/wrap.info/0.0.1.ts)
+    * encoded as msgpack binary file
+  * `schema.graphql` remains but will be deprecated for `wrap.info`'s built-in `abi`.
+
+# Polywrap 0.0.1-prealpha.92
+## Features
+* [PR-1006](https://github.com/polywrap/monorepo/pull/1006/files) `polywrap-wasm-rs`: Add Rust encoder unit tests.
+* [PR-967](https://github.com/polywrap/monorepo/pull/967) `polywrap` CLI, `polywrap-wasm-rs`, `@polywrap/wasm-as`, `@polywrap/schema-parse`, `@polywrap/schema-compose`, `@polywrap/schema-bind`, `@polywrap/core-js`, `@polywrap/client-js`: Environment configuration for wrappers was refactored to enable environments at the method level, remove client env sanitization and adding support for Rust. `@env` annotation was introduced for methods declared in wrappers's schemas.
+* [PR-1005](https://github.com/polywrap/monorepo/pull/1005) `@polywrap/core-js`, `@polywrap/client-js`: Refactored `client.subscribe` to use invoke syntax.
+
+## Breaking Changes
+* [PR-967](https://github.com/polywrap/monorepo/pull/967) Wasm runtime (`polywrap-wasm-rs`, `@polywrap/wasm-as`) changed invoke signature and imports/exports, schema pipeline (`@polywrap/schema-parse`, `@polywrap/schema-compose`, `@polywrap/schema-bind`) now supports external env imports and TypeInfo and `@env` annotation for methods, `polywrap` changed compiler's imports, `@polywrap/core-js` changed Plugin interface, `@polywrap/client-js` changed environment model implementation.
+* [PR-1005](https://github.com/polywrap/monorepo/pull/1005) `@polywrap/core-js`, `@polywrap/client-js`: Refactored `client.subscribe` to use invoke syntax.
+
 # Polywrap 0.0.1-prealpha.91
 ## Features
 * [PR-989](https://github.com/polywrap/monorepo/pull/989/files) `@polywrap/core-js`: Add job status in workflow job's result object.

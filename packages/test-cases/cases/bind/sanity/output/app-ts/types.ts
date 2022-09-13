@@ -60,12 +60,25 @@ export interface CustomType {
   optEnum?: Types.CustomEnum | null;
   enumArray: Array<Types.CustomEnum>;
   optEnumArray?: Array<Types.CustomEnum | null> | null;
+  map: Map<Types.String, Types.Int>;
+  mapOfArr: Map<Types.String, Array<Types.Int>>;
+  mapOfObj: Map<Types.String, Types.AnotherType>;
+  mapOfArrOfObj: Map<Types.String, Array<Types.AnotherType>>;
+  mapCustomValue: Map<Types.String, Types.CustomMapValue | undefined>;
 }
 
 export interface AnotherType {
   prop?: Types.String | null;
   circular?: Types.CustomType | null;
   const?: Types.String | null;
+}
+
+export interface CustomMapValue {
+  foo: Types.String;
+}
+
+export interface _else {
+  else: Types.String;
 }
 
 export enum CustomEnumEnum {
@@ -78,6 +91,17 @@ export type CustomEnumString =
   | "BYTES"
 
 export type CustomEnum = CustomEnumEnum | CustomEnumString;
+
+export enum whileEnum {
+  for,
+  in,
+}
+
+export type whileString =
+  | "for"
+  | "in"
+
+export type _while = whileEnum | whileString;
 
 /// Imported Objects START ///
 
@@ -119,7 +143,7 @@ export type TestImport_Enum = TestImport_EnumEnum | TestImport_EnumString;
 /// Imported Modules START ///
 
 /* URI: "testimport.uri.eth" */
-interface TestImport_Module_Args_importedMethod extends Record<string, unknown> {
+interface TestImport_Module_Args_importedMethod {
   str: Types.String;
   optStr?: Types.String | null;
   u: Types.UInt;
@@ -136,7 +160,7 @@ interface TestImport_Module_Args_importedMethod extends Record<string, unknown> 
 }
 
 /* URI: "testimport.uri.eth" */
-interface TestImport_Module_Args_anotherMethod extends Record<string, unknown> {
+interface TestImport_Module_Args_anotherMethod {
   arg: Array<Types.String>;
 }
 
@@ -150,7 +174,7 @@ export const TestImport_Module = {
     return client.invoke<Types.TestImport_Object | null>({
       uri,
       method: "importedMethod",
-      args
+      args: args as unknown as Record<string, unknown>
     });
   },
 
@@ -162,7 +186,7 @@ export const TestImport_Module = {
     return client.invoke<Types.Int32>({
       uri,
       method: "anotherMethod",
-      args
+      args: args as unknown as Record<string, unknown>
     });
   }
 }
